@@ -130,7 +130,7 @@ TextureImporter:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Ghost-Up_
+      name: Ghost-Up_0
       rect:
         serializedVersion: 2
         x: 6
@@ -182,7 +182,7 @@ TextureImporter:
     weights: []
     secondaryTextures: []
     nameFileIdTable:
-      Ghost-Up_: 8378414868843346906
+      Ghost-Up_0: 8378414868843346906
       Ghost-Up_1: 4644062165160409319
       Ghost-Up_2: -886133940542906490
   mipmapLimitGroupName: 

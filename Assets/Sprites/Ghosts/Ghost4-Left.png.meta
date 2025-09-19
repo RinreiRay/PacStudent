@@ -117,7 +117,7 @@ TextureImporter:
         width: 20
         height: 20
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       outline: []
       physicsShape: []
@@ -151,7 +151,7 @@ TextureImporter:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Ghost4-Left_3
+      name: Ghost4-Left_2
       rect:
         serializedVersion: 2
         x: 65
@@ -184,8 +184,7 @@ TextureImporter:
     nameFileIdTable:
       Ghost4-Left_0: -4188821535318215626
       Ghost4-Left_1: -8376795635247886178
-      Ghost4-Left_2: -2266291383466260535
-      Ghost4-Left_3: -908496288405561821
+      Ghost4-Left_2: -908496288405561821
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

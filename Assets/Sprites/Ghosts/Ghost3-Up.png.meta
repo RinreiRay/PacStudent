@@ -109,7 +109,7 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: Ghost3-Up_0
+      name: Ghost3-Up_1
       rect:
         serializedVersion: 2
         x: 38
@@ -130,7 +130,7 @@ TextureImporter:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Ghost3-Up_2
+      name: Ghost3-Up_0
       rect:
         serializedVersion: 2
         x: 6
@@ -138,7 +138,7 @@ TextureImporter:
         width: 20
         height: 20
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       outline: []
       physicsShape: []
@@ -151,7 +151,7 @@ TextureImporter:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Ghost3-Up_3
+      name: Ghost3-Up_2
       rect:
         serializedVersion: 2
         x: 70
@@ -182,10 +182,9 @@ TextureImporter:
     weights: []
     secondaryTextures: []
     nameFileIdTable:
-      Ghost3-Up_0: -4762366194517674015
-      Ghost3-Up_1: -186124889818035357
-      Ghost3-Up_2: 7802650349485567991
-      Ghost3-Up_3: -8938845334846906134
+      Ghost3-Up_0: 7802650349485567991
+      Ghost3-Up_1: -4762366194517674015
+      Ghost3-Up_2: -8938845334846906134
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

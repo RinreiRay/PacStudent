@@ -151,7 +151,7 @@ TextureImporter:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Ghost2-Left_3
+      name: Ghost2-Left_2
       rect:
         serializedVersion: 2
         x: 65
@@ -184,8 +184,7 @@ TextureImporter:
     nameFileIdTable:
       Ghost2-Left_0: 8153484282952823827
       Ghost2-Left_1: 5033336120589899072
-      Ghost2-Left_2: 4361426112155141067
-      Ghost2-Left_3: -7751500214302702560
+      Ghost2-Left_2: -7751500214302702560
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 
