@@ -103,10 +103,10 @@ TextureImporter:
       name: pellet_0
       rect:
         serializedVersion: 2
-        x: 7
-        y: 3
-        width: 18
-        height: 26
+        x: 9
+        y: 9
+        width: 14
+        height: 14
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
