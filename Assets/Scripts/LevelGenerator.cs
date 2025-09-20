@@ -13,6 +13,7 @@ public class LevelGenerator : MonoBehaviour
     public GameObject tJunctionPrefab;          // 7
     public GameObject ghostExitWallPrefab;      // 8
     public float tileSize = 1f;
+    public Vector2 levelOffset = Vector2.zero;
 
     private readonly int[,] quadrant =
     {
@@ -44,6 +45,8 @@ public class LevelGenerator : MonoBehaviour
 
         GameObject levelRoot = new GameObject("Level");
         Populate(fullMap, levelRoot.transform);
+
+        levelRoot.transform.position = levelOffset;
 
         FitCamera(fullMap);
     }
