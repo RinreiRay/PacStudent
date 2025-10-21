@@ -4,10 +4,6 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
-#if UNITY_EDITOR
-using UnityEditor;
-#endif
-
 public class UIManager : MonoBehaviour
 {
     [SerializeField] private RectTransform loadingPanel;
@@ -46,31 +42,41 @@ public class UIManager : MonoBehaviour
         }
     }
 
-    public void QuitGame()
+    public void ExitGame()
     {
-#if UNITY_EDITOR
-        EditorApplication.isPlaying = false;
-#else
-                Application.Quit();
-#endif
+        StartCoroutine(ExitStartScreenSequence());
+    }
+
+    private IEnumerator ExitStartScreenSequence()
+    {
+        ShowLoadingScreen();
+
+        yield return new WaitForSeconds(1.0f);
+
+        AsyncOperation asyncLoad = SceneManager.LoadSceneAsync(0);
+
+        while (!asyncLoad.isDone)
+        {
+            yield return null;
+        }
     }
 
     public void OnSceneLoaded(Scene scene, LoadSceneMode mode)
     {
-        /*if (scene.buildIndex == 1)
+        if (scene.buildIndex == 1)
         {
-            GameObject quitButtonObject = GameObject.FindGameObjectWithTag("QuitButton");
+            GameObject exitButtonObject = GameObject.FindGameObjectWithTag("ExitButton");
 
-            if (quitButtonObject != null)
+            if (exitButtonObject != null)
             {
-                Button quitButton = quitButtonObject.GetComponent<Button>();
+                Button exitButton = exitButtonObject.GetComponent<Button>();
 
-                if (quitButton != null)
+                if (exitButton != null)
                 {
-                    quitButton.onClick.AddListener(QuitGame);
+                    exitButton.onClick.AddListener(ExitGame);
                 }
             }
-        }*/
+        }
 
         mainCamera = Camera.main;
         StartCoroutine(HideLoadingScreenSequence());
