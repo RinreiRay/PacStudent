@@ -10,11 +10,17 @@ using UnityEditor;
 
 public class UIManager : MonoBehaviour
 {
-
+    [SerializeField] private RectTransform loadingPanel;
     private Camera mainCamera;
 
     void Start()
     {
+        if (loadingPanel != null)
+        {
+            loadingPanel.sizeDelta = new Vector2(Screen.width, Screen.height);
+            loadingPanel.anchoredPosition = new Vector2(0.0f, -Screen.height);
+        }
+
         mainCamera = Camera.main;
     }
 
@@ -28,6 +34,8 @@ public class UIManager : MonoBehaviour
 
     private IEnumerator LoadFirstLevelSequence()
     {
+        ShowLoadingScreen();
+
         yield return new WaitForSeconds(1.0f);
 
         AsyncOperation asyncLoad = SceneManager.LoadSceneAsync(1);
@@ -65,8 +73,66 @@ public class UIManager : MonoBehaviour
         }*/
 
         mainCamera = Camera.main;
+        StartCoroutine(HideLoadingScreenSequence());
     }
 
+    private IEnumerator HideLoadingScreenSequence()
+    {
+        yield return new WaitForSeconds(1.0f);
+        HideLoadingScreen();
+    }
+
+    public void ShowLoadingScreen()
+    {
+        if (loadingPanel != null)
+        {
+            StartCoroutine(ShowLoadingScreenCoroutine());
+        }
+    }
+
+    private IEnumerator ShowLoadingScreenCoroutine()
+    {
+        Vector2 targetPosition = new Vector2(0.0f, 0.0f);
+        Vector2 startPosition = loadingPanel.anchoredPosition;
+        float duration = 0.5f;
+        float elapsedTime = 0.0f;
+
+        while (elapsedTime < duration)
+        {
+            elapsedTime += Time.deltaTime;
+            float t = elapsedTime / duration;
+            loadingPanel.anchoredPosition = Vector2.Lerp(startPosition, targetPosition, t);
+            yield return null;
+        }
+
+        loadingPanel.anchoredPosition = targetPosition;
+    }
+
+    public void HideLoadingScreen()
+    {
+        if (loadingPanel != null)
+        {
+            StartCoroutine(HideLoadingScreenCoroutine());
+        }
+    }
+
+    private IEnumerator HideLoadingScreenCoroutine()
+    {
+        Vector2 targetPosition = new Vector2(0.0f, -Screen.height);
+        Vector2 startPosition = loadingPanel.anchoredPosition;
+        float duration = 0.5f;
+        float elapsedTime = 0.0f;
+
+        while (elapsedTime < duration)
+        {
+            elapsedTime += Time.deltaTime;
+            float t = elapsedTime / duration;
+            loadingPanel.anchoredPosition = Vector2.Lerp(startPosition, targetPosition, t);
+            yield return null;
+        }
+
+        loadingPanel.anchoredPosition = targetPosition;
+    }
 
     void Update()
     {
