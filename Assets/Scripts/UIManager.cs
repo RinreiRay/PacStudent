@@ -4,21 +4,28 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
-#if UNITY_EDITOR
-using UnityEditor;
-#endif
-
 public class UIManager : MonoBehaviour
 {
     [SerializeField] private RectTransform loadingPanel;
     private Camera mainCamera;
+    private Canvas parentCanvas;
 
     void Start()
     {
         if (loadingPanel != null)
         {
-            loadingPanel.sizeDelta = new Vector2(Screen.width, Screen.height);
-            loadingPanel.anchoredPosition = new Vector2(0.0f, -Screen.height);
+
+            parentCanvas = loadingPanel.GetComponentInParent<Canvas>();
+
+            loadingPanel.anchorMin = new Vector2(0, 0);
+            loadingPanel.anchorMax = new Vector2(1, 1);
+            loadingPanel.offsetMin = Vector2.zero;
+            loadingPanel.offsetMax = Vector2.zero;
+
+            RectTransform canvasRect = parentCanvas.GetComponent<RectTransform>();
+            float canvasHeight = canvasRect.rect.height;
+
+            loadingPanel.anchoredPosition = new Vector2(0.0f, -canvasHeight);
         }
 
         mainCamera = Camera.main;
@@ -46,33 +53,49 @@ public class UIManager : MonoBehaviour
         }
     }
 
-    public void QuitGame()
+    public void ExitGame()
     {
-#if UNITY_EDITOR
-        EditorApplication.isPlaying = false;
-#else
-                Application.Quit();
-#endif
+        StartCoroutine(ExitStartScreenSequence());
+    }
+
+    private IEnumerator ExitStartScreenSequence()
+    {
+        ShowLoadingScreen();
+
+        yield return new WaitForSeconds(1.0f);
+
+        AsyncOperation asyncLoad = SceneManager.LoadSceneAsync(0);
+
+        while (!asyncLoad.isDone)
+        {
+            yield return null;
+        }
     }
 
     public void OnSceneLoaded(Scene scene, LoadSceneMode mode)
     {
-        /*if (scene.buildIndex == 1)
+        if (scene.buildIndex == 1)
         {
-            GameObject quitButtonObject = GameObject.FindGameObjectWithTag("QuitButton");
+            GameObject exitButtonObject = GameObject.FindGameObjectWithTag("ExitButton");
 
-            if (quitButtonObject != null)
+            if (exitButtonObject != null)
             {
-                Button quitButton = quitButtonObject.GetComponent<Button>();
+                Button exitButton = exitButtonObject.GetComponent<Button>();
 
-                if (quitButton != null)
+                if (exitButton != null)
                 {
-                    quitButton.onClick.AddListener(QuitGame);
+                    exitButton.onClick.AddListener(ExitGame);
                 }
             }
-        }*/
+        }
 
         mainCamera = Camera.main;
+
+        if (loadingPanel != null)
+        {
+            parentCanvas = loadingPanel.GetComponentInParent<Canvas>();
+        }
+
         StartCoroutine(HideLoadingScreenSequence());
     }
 
@@ -92,7 +115,7 @@ public class UIManager : MonoBehaviour
 
     private IEnumerator ShowLoadingScreenCoroutine()
     {
-        Vector2 targetPosition = new Vector2(0.0f, 0.0f);
+        Vector2 targetPosition = Vector2.zero;
         Vector2 startPosition = loadingPanel.anchoredPosition;
         float duration = 0.5f;
         float elapsedTime = 0.0f;
@@ -118,7 +141,10 @@ public class UIManager : MonoBehaviour
 
     private IEnumerator HideLoadingScreenCoroutine()
     {
-        Vector2 targetPosition = new Vector2(0.0f, -Screen.height);
+        RectTransform canvasRect = parentCanvas.GetComponent<RectTransform>();
+        float canvasHeight = canvasRect.rect.height;
+        Vector2 targetPosition = new Vector2(0.0f, -canvasHeight);
+
         Vector2 startPosition = loadingPanel.anchoredPosition;
         float duration = 0.5f;
         float elapsedTime = 0.0f;
@@ -132,7 +158,6 @@ public class UIManager : MonoBehaviour
         }
 
         loadingPanel.anchoredPosition = targetPosition;
-        loadingPanel.anchoredPosition = new Vector2(0.0f, -2000.0f);
     }
 
     void Update()
