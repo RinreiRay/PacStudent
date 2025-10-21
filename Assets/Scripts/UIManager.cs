@@ -132,6 +132,7 @@ public class UIManager : MonoBehaviour
         }
 
         loadingPanel.anchoredPosition = targetPosition;
+        loadingPanel.anchoredPosition = new Vector2(0.0f, -2000.0f);
     }
 
     void Update()
