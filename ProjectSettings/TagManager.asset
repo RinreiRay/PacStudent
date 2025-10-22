@@ -5,6 +5,7 @@ TagManager:
   serializedVersion: 2
   tags:
   - ExitButton
+  - Cherry
   layers:
   - Default
   - TransparentFX
