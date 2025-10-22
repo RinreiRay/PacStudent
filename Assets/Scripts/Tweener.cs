@@ -23,12 +23,15 @@ public class Tweener : MonoBehaviour
             float currentTime = Time.time;
             float progress = (currentTime - currentTween.StartTime) / currentTween.Duration;
 
-            progress = Mathf.Clamp01(progress * progress * progress);
+            progress = Mathf.Clamp01(progress);
+
+            // Apply smoothstep easing
+            float easedProgress = Mathf.SmoothStep(0f, 1f, progress);
 
             currentTween.Target.position = Vector3.Lerp(
                 currentTween.StartPos,
                 currentTween.EndPos,
-                progress
+                easedProgress
             );
 
             // Only remove if progress is complete
