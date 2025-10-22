@@ -15,6 +15,8 @@ public class LevelGenerator : MonoBehaviour
     public float tileSize = 1f;
     public Vector2 levelOffset = Vector2.zero;
 
+    public int[,] LevelMap { get; private set; }
+
     private readonly int[,] quadrant =
     {
         {1,2,2,2,2,2,2,2,2,2,2,2,2,7},
@@ -41,14 +43,14 @@ public class LevelGenerator : MonoBehaviour
         var current = GameObject.Find("Level");
         if (current) Destroy(current);
 
-        int[,] fullMap = BuildFullMap(quadrant);
+        LevelMap = BuildFullMap(quadrant);
 
         GameObject levelRoot = new GameObject("Level");
-        Populate(fullMap, levelRoot.transform);
+        Populate(LevelMap, levelRoot.transform);
 
         levelRoot.transform.position = levelOffset;
 
-        FitCamera(fullMap);
+        FitCamera(LevelMap);
     }
 
     private int[,] BuildFullMap(int[,] q)
