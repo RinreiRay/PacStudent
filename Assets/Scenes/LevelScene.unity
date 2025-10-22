@@ -1702,7 +1702,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ab4638381c761432a80c9f6b3b08cd87, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  moveSpeed: 2
+  moveSpeed: 4
   movementSound: {fileID: 8300000, guid: 44744e75880f34af4b20929bc575338d, type: 3}
   pelletEatingSound: {fileID: 8300000, guid: 13b15688cf03c46a8b42919d7671b543, type: 3}
 --- !u!82 &1050884910
