@@ -6,6 +6,11 @@ TagManager:
   tags:
   - ExitButton
   - Cherry
+  - Wall
+  - Pellet
+  - PowerPellet
+  - Teleporter
+  - Ghost
   layers:
   - Default
   - TransparentFX
