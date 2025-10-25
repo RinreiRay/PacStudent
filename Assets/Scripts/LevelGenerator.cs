@@ -36,8 +36,6 @@ public class LevelGenerator : MonoBehaviour
         {0,0,0,0,0,0,5,0,0,0,4,0,0,0},
     };
 
-
-    // Start is called before the first frame update
     void Start()
     {
         var current = GameObject.Find("Level");
@@ -55,8 +53,8 @@ public class LevelGenerator : MonoBehaviour
 
     private int[,] BuildFullMap(int[,] q)
     {
-        int h = q.GetLength(0); 
-        int w = q.GetLength(1); 
+        int h = q.GetLength(0);
+        int w = q.GetLength(1);
 
         int fullH = h * 2 - 1;
         int fullW = w * 2;
@@ -100,7 +98,7 @@ public class LevelGenerator : MonoBehaviour
             for (int c = 0; c < cols; ++c)
             {
                 int id = map[r, c];
-                if (id == 0) continue; 
+                if (id == 0) continue;
 
                 GameObject prefab = PrefabFromId(id);
                 if (!prefab) continue;
@@ -108,8 +106,69 @@ public class LevelGenerator : MonoBehaviour
                 Vector3 pos = new Vector3(c, -r, 0);
                 Quaternion rot = RotationForTile(map, r, c, id);
 
-                Instantiate(prefab, pos, rot, parent);
+                GameObject instantiated = Instantiate(prefab, pos, rot, parent);
+
+                // Setup collision components for walls and pellets
+                SetupCollisionComponents(instantiated, id);
             }
+        }
+    }
+
+    private void SetupCollisionComponents(GameObject obj, int tileId)
+    {
+        // Setup for walls (1,2,3,4,7,8)
+        if (IsWall(tileId))
+        {
+            Rigidbody2D rb = obj.GetComponent<Rigidbody2D>();
+            if (rb == null)
+            {
+                rb = obj.AddComponent<Rigidbody2D>();
+            }
+            rb.bodyType = RigidbodyType2D.Kinematic;
+            rb.gravityScale = 0f;
+
+            Collider2D col = obj.GetComponent<Collider2D>();
+            if (col == null)
+            {
+                BoxCollider2D boxCol = obj.AddComponent<BoxCollider2D>();
+                boxCol.size = Vector2.one * 0.8f;
+                boxCol.isTrigger = true;
+            }
+            else
+            {
+                col.isTrigger = true;
+                if (col is BoxCollider2D boxCol)
+                {
+                    boxCol.size = Vector2.one * 0.8f;
+                }
+            }
+
+            obj.tag = "Wall";
+        }
+        // Setup for pellets (5,6)
+        else if (tileId == 5 || tileId == 6)
+        {
+            Rigidbody2D rb = obj.GetComponent<Rigidbody2D>();
+            if (rb == null)
+            {
+                rb = obj.AddComponent<Rigidbody2D>();
+            }
+            rb.bodyType = RigidbodyType2D.Kinematic;
+            rb.gravityScale = 0f;
+
+            Collider2D col = obj.GetComponent<Collider2D>();
+            if (col == null)
+            {
+                CircleCollider2D circleCol = obj.AddComponent<CircleCollider2D>();
+                circleCol.radius = 0.3f;
+                circleCol.isTrigger = true;
+            }
+            else
+            {
+                col.isTrigger = true;
+            }
+
+            obj.tag = (tileId == 6) ? "PowerPellet" : "Pellet";
         }
     }
 
@@ -177,10 +236,8 @@ public class LevelGenerator : MonoBehaviour
             if (vertRun > horizRun)
                 return Quaternion.Euler(0, 0, 90); // Vertical
 
-            
             return Quaternion.identity; // Horizontal
         }
-
 
         // Corner Tiles
         if (id == 1)
@@ -212,7 +269,6 @@ public class LevelGenerator : MonoBehaviour
             if (up) score[3] += 1 + CountRun(map, r, c, -1, 0);
             if (right) score[3] += 1 + CountRun(map, r, c, 0, 1);
 
-
             int best = 0;
             for (int i = 1; i < 4; i++)
                 if (score[i] > score[best]) best = i;
@@ -234,7 +290,6 @@ public class LevelGenerator : MonoBehaviour
             if (!down) return Quaternion.Euler(0, 0, 180); // T down
             return Quaternion.Euler(0, 0, 270); // T left
         }
-
 
         return Quaternion.identity;
     }

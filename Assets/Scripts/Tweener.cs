@@ -4,7 +4,6 @@ using UnityEngine;
 
 public class Tweener : MonoBehaviour
 {
-    //private Tween activeTween;
     private List<Tween> activeTweens;
 
     // Start is called before the first frame update
@@ -45,10 +44,43 @@ public class Tweener : MonoBehaviour
 
     public bool AddTween(Transform targetObject, Vector3 startPos, Vector3 endPos, float duration)
     {
-        // Remove any existing tween for this target
-        activeTweens.RemoveAll(t => t.Target == targetObject);
+        for (int i = activeTweens.Count - 1; i >= 0; i--)
+        {
+            if (activeTweens[i].Target == targetObject)
+            {
+                activeTweens.RemoveAt(i);
+            }
+        }
 
-        activeTweens.Add(new Tween(targetObject, startPos, endPos, Time.time, duration));
+        // Add new tween
+        Tween newTween = new Tween(targetObject, startPos, endPos, Time.time, duration);
+        activeTweens.Add(newTween);
+
         return true;
+    }
+
+    // Check if object is currently tweening
+    public bool IsTweening(Transform targetObject)
+    {
+        foreach (Tween tween in activeTweens)
+        {
+            if (tween.Target == targetObject)
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    // Stop a tween
+    public void StopTween(Transform targetObject)
+    {
+        for (int i = activeTweens.Count - 1; i >= 0; i--)
+        {
+            if (activeTweens[i].Target == targetObject)
+            {
+                activeTweens.RemoveAt(i);
+            }
+        }
     }
 }
