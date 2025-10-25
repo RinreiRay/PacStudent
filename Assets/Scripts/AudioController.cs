@@ -7,6 +7,8 @@ public class AudioController : MonoBehaviour
 
     public AudioSource audio1;
     public AudioSource audio2;
+    [SerializeField] private float delayAudio = 0.5f;
+
     private bool startedLoop;
 
     // Start is called before the first frame update
@@ -20,8 +22,15 @@ public class AudioController : MonoBehaviour
     {
         if (!audio1.isPlaying && !startedLoop)
         {
-            audio2.Play();
+            StartCoroutine(PlayLoop());
             startedLoop = true;
         }
+    }
+
+    private IEnumerator PlayLoop()
+    {
+        yield return new WaitForSeconds(delayAudio);
+
+        audio2.Play();
     }
 }
