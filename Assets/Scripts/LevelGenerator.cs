@@ -49,6 +49,7 @@ public class LevelGenerator : MonoBehaviour
         levelRoot.transform.position = levelOffset;
 
         FitCamera(LevelMap);
+        StartCoroutine(InitializePelletCount());
     }
 
     private int[,] BuildFullMap(int[,] q)
@@ -314,5 +315,39 @@ public class LevelGenerator : MonoBehaviour
         float currentHalfWidth = cam.orthographicSize * cam.aspect;
         if (targetHalfWidth > currentHalfWidth)
             cam.orthographicSize = targetHalfWidth / cam.aspect + 1f;
+    }
+
+    private IEnumerator InitializePelletCount()
+    {
+        yield return new WaitForEndOfFrame();
+
+        int pelletCount = CountPelletsInLevel();
+
+        if (ScoreManager.Instance != null)
+        {
+            ScoreManager.Instance.InitializePelletCount(pelletCount);
+        }
+    }
+
+    private int CountPelletsInLevel()
+    {
+        int count = 0;
+        int rows = LevelMap.GetLength(0);
+        int cols = LevelMap.GetLength(1);
+
+        for (int r = 0; r < rows; r++)
+        {
+            for (int c = 0; c < cols; c++)
+            {
+                int tileValue = LevelMap[r, c];
+                if (tileValue == 5 || tileValue == 6) // pellets and power pellets
+                {
+                    count++;
+                }
+            }
+        }
+
+        Debug.Log($"Counted {count} pellets in level");
+        return count;
     }
 }

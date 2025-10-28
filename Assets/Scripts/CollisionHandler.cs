@@ -82,6 +82,13 @@ public class CollisionHandler : MonoBehaviour
     {
         Debug.Log($"{(isPowerPellet ? "Power " : "")}Pellet collision detected by CollisionHandler");
 
+        // Check if pellet still exists
+        if (pellet == null || pellet.gameObject == null)
+        {
+            Debug.Log("Pellet already destroyed by movement system");
+            return;
+        }
+
         if (pacStudent != null)
         {
             pacStudent.OnPelletCollision(pellet.gameObject, isPowerPellet);
@@ -109,6 +116,12 @@ public class CollisionHandler : MonoBehaviour
         if (pacStudent != null)
         {
             pacStudent.OnCherryCollision(cherry.gameObject);
+        }
+
+        // Add cherry score
+        if (ScoreManager.Instance != null)
+        {
+            ScoreManager.Instance.AddCherryScore();
         }
     }
 }

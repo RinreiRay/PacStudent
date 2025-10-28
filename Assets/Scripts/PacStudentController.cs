@@ -341,6 +341,25 @@ public class PacStudentController : MonoBehaviour
                 collectedPellets.Add(gridPos);
                 levelMap[gridPos.y, gridPos.x] = 0;
 
+                // Add score based on pellet type
+                if (ScoreManager.Instance != null)
+                {
+                    if (tileValue == 6) // Power pellet
+                    {
+                        ScoreManager.Instance.AddPowerPelletScore();
+                        Debug.Log("Power pellet collected - 50 points added");
+                    }
+                    else // Normal pellet
+                    {
+                        ScoreManager.Instance.AddPelletScore();
+                        Debug.Log("Normal pellet collected - 10 points added");
+                    }
+                }
+                else
+                {
+                    Debug.LogError("ScoreManager.Instance is null!");
+                }
+
                 // Find and destroy the pellet GameObject
                 DestroyPelletAtPosition(gridPos);
 
@@ -408,10 +427,22 @@ public class PacStudentController : MonoBehaviour
 
     public void OnPelletCollision(GameObject pellet, bool isPowerPellet)
     {
+        // Check if pellet still exists
+        if (pellet == null)
+        {
+            Debug.Log("Pellet is null, already destroyed");
+            return;
+        }
+
         // Get pellet position and check if already collected
         Vector2Int pelletGridPos = WorldToGrid(pellet.transform.position);
 
-        if (collectedPellets.Contains(pelletGridPos)) return;
+        if (collectedPellets.Contains(pelletGridPos))
+        {
+            Debug.Log("Pellet already collected, destroying GameObject");
+            Destroy(pellet);
+            return;
+        }
 
         Debug.Log($"Pellet collision handled: {(isPowerPellet ? "Power Pellet" : "Normal Pellet")}");
 
@@ -426,7 +457,21 @@ public class PacStudentController : MonoBehaviour
             levelMap[pelletGridPos.y, pelletGridPos.x] = 0;
         }
 
-        // Destroy the pellet
+        // Add score through ScoreManager then destroy
+        if (ScoreManager.Instance != null)
+        {
+            if (isPowerPellet)
+            {
+                ScoreManager.Instance.AddPowerPelletScore();
+                Debug.Log("Power pellet collision - 50 points added");
+            }
+            else
+            {
+                ScoreManager.Instance.AddPelletScore();
+                Debug.Log("Normal pellet collision - 10 points added");
+            }
+        }
+
         Destroy(pellet);
     }
 
@@ -443,6 +488,12 @@ public class PacStudentController : MonoBehaviour
     public void OnCherryCollision(GameObject cherry)
     {
         Debug.Log("Cherry collision handled");
+
+        CherryController cherryController = FindFirstObjectByType<CherryController>();
+        if (cherryController != null)
+        {
+            cherryController.OnCherryCollected();
+        }
     }
 
     private void CreateWallCollisionEffect(Vector3 collisionPoint)

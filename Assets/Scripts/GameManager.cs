@@ -2,6 +2,7 @@
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
+using UnityEngine.SceneManagement;
 
 public class GameManager : MonoBehaviour
 {
@@ -13,10 +14,12 @@ public class GameManager : MonoBehaviour
     [SerializeField] private TMP_Text countdownText;
     [SerializeField] private Image blockingImage;
     [SerializeField] private TMP_Text gameTimerText;
+    [SerializeField] private TMP_Text gameOverText;
 
     [SerializeField] private float initialWaitTime = 2f;
-    [SerializeField] private float countdownDuration = 1f; 
+    [SerializeField] private float countdownDuration = 1f;
     [SerializeField] private float goDisplayTime = 0.5f;
+    [SerializeField] private float gameOverDisplayTime = 3f;
 
     private PacStudentController pacStudent;
     private bool timerRunning = false;
@@ -39,13 +42,16 @@ public class GameManager : MonoBehaviour
     {
         pacStudent = FindFirstObjectByType<PacStudentController>();
 
-        // Initialize UI
         if (gameTimerText != null)
         {
             UpdateGameTimerUI();
         }
 
-        // Start countdown sequence
+        if (gameOverText != null)
+        {
+            gameOverText.gameObject.SetActive(false);
+        }
+
         StartCoroutine(StartGameCountdown());
     }
 
@@ -56,6 +62,57 @@ public class GameManager : MonoBehaviour
             gameTime += Time.deltaTime;
             UpdateGameTimerUI();
         }
+
+        if (gameStarted && !gameOver)
+        {
+            CheckGameOverConditions();
+        }
+    }
+
+    private void CheckGameOverConditions()
+    {
+
+    }
+
+    public void TriggerGameOver()
+    {
+        if (gameOver) return;
+
+        gameOver = true;
+        timerRunning = false;
+
+        // Disable movement
+        if (pacStudent != null)
+        {
+            pacStudent.SetMovementEnabled(false);
+        }
+
+        // Save high score
+        if (ScoreManager.Instance != null)
+        {
+            ScoreManager.Instance.SaveHighScore(gameTime);
+        }
+
+        StartCoroutine(ShowGameOverSequence());
+    }
+
+    private IEnumerator ShowGameOverSequence()
+    {
+        if (blockingImage != null)
+        {
+            blockingImage.gameObject.SetActive(true);
+        }
+
+        if (gameOverText != null)
+        {
+            gameOverText.text = "Game Over";
+            gameOverText.gameObject.SetActive(true);
+        }
+
+        Debug.Log("Game Over displayed");
+
+        yield return new WaitForSeconds(gameOverDisplayTime);
+        SceneManager.LoadScene(0);
     }
 
     private IEnumerator StartGameCountdown()
@@ -97,7 +154,6 @@ public class GameManager : MonoBehaviour
             }
         }
 
-        // Hide UI elements
         if (countdownText != null)
         {
             countdownText.gameObject.SetActive(false);
@@ -108,7 +164,6 @@ public class GameManager : MonoBehaviour
             blockingImage.gameObject.SetActive(false);
         }
 
-        // Start the game
         StartGame();
     }
 
@@ -153,15 +208,7 @@ public class GameManager : MonoBehaviour
 
     public void EndGame()
     {
-        gameOver = true;
-        timerRunning = false;
-
-        if (pacStudent != null)
-        {
-            pacStudent.SetMovementEnabled(false);
-        }
-
-        Debug.Log("Game Ended");
+        TriggerGameOver();
     }
 
     public float TotalCountdownTime
