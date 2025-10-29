@@ -83,4 +83,10 @@ public class Tweener : MonoBehaviour
             }
         }
     }
+
+    public void RemoveAllTweens()
+    {
+        activeTweens.Clear();
+        Debug.Log("All tweens removed");
+    }
 }

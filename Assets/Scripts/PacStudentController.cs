@@ -605,7 +605,24 @@ public class PacStudentController : MonoBehaviour
 
     public void OnTeleporterCollision(GameObject teleporter)
     {
-        Debug.Log("Teleporter collision handled");
+        Debug.Log("Teleporter collision detected");
+    }
+
+    public void TeleportTo(Vector2Int newGridPosition, Vector3 newWorldPosition)
+    {
+        // Stop current movement
+        if (tweener != null)
+        {
+            tweener.RemoveAllTweens();
+        }
+
+        isLerping = false;
+
+        // Update position
+        currentGridPosition = newGridPosition;
+        transform.position = newWorldPosition;
+
+        Debug.Log($"Teleported to grid position: {newGridPosition}, world position: {newWorldPosition}");
     }
 
     public void OnCherryCollision(GameObject cherry)
