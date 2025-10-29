@@ -107,7 +107,6 @@ public class ScoreManager : MonoBehaviour
         }
     }
 
-    // Updated method to hide scared text when not in hunt mode
     public void UpdateGhostTimerUI()
     {
         if (scaredText != null)
@@ -121,20 +120,13 @@ public class ScoreManager : MonoBehaviour
 
                 Debug.Log($"Ghost timer UI updated: {remainingSeconds} seconds remaining");
             }
+            else
             {
-                // Hide the scared text completely when power pellet is not active
                 scaredText.gameObject.SetActive(false);
-
-                Debug.Log("Ghost timer UI hidden - power pellet not active");
             }
-        }
-        else
-        {
-            Debug.LogWarning("Scared text UI element is not assigned!");
         }
     }
 
-    // Keep the old method name for backward compatibility, but redirect to the correct method
     public void UpdateScaredUI()
     {
         UpdateGhostTimerUI();
