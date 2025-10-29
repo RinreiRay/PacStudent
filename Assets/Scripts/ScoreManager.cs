@@ -107,7 +107,7 @@ public class ScoreManager : MonoBehaviour
     {
         if (scaredText != null)
         {
-            scaredText.text = "0"; // Will be updated by ghost system later
+            scaredText.text = "0";
         }
     }
 
