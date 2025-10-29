@@ -11,6 +11,8 @@ public class PacStudentController : MonoBehaviour
 
     private bool hasReceivedFirstInput = false;
     private bool isLerping = false;
+    private bool movementEnabled = false;
+    private bool isPlayingDeathAnimation = false;
     private Vector2Int currentGridPosition;
 
     private Animator animator;
@@ -19,12 +21,19 @@ public class PacStudentController : MonoBehaviour
 
     [SerializeField] private AudioClip movementSound;
     [SerializeField] private AudioClip pelletEatingSound;
+    [SerializeField] private AudioClip wallCollisionSound;
 
     private int[,] levelMap;
     private GameObject levelGenerator;
     private LevelGenerator levelGen;
 
     private Tweener tweener;
+
+    private HashSet<Vector2Int> collectedPellets = new HashSet<Vector2Int>();
+
+    private Vector2Int lastWallCollisionPosition = new Vector2Int(int.MinValue, int.MinValue);
+    private Vector2Int lastAttemptedDirection = Vector2Int.zero;
+    private bool hasTriggeredWallCollision = false;
 
     void Start()
     {
@@ -60,16 +69,28 @@ public class PacStudentController : MonoBehaviour
 
     void Update()
     {
+        if (isPlayingDeathAnimation)
+        {
+            UpdateAnimationState();
+            return;
+        }
+
         GatherInput();
 
         // Allow movement after first input
-        if (!isLerping && hasReceivedFirstInput)
+        if (!isLerping && hasReceivedFirstInput && movementEnabled)
         {
             TryMove();
         }
 
         // Update animations based on movement state
         UpdateAnimationState();
+    }
+
+    public void SetMovementEnabled(bool enabled)
+    {
+        movementEnabled = enabled;
+        Debug.Log($"PacStudent movement enabled: {enabled}");
     }
 
     private void GatherInput()
@@ -97,6 +118,13 @@ public class PacStudentController : MonoBehaviour
         if (newInput != Vector2Int.zero)
         {
             lastInput = newInput;
+
+            if (newInput != lastAttemptedDirection)
+            {
+                ResetWallCollisionTracking();
+                lastAttemptedDirection = newInput;
+            }
+
             if (!hasReceivedFirstInput)
             {
                 hasReceivedFirstInput = true;
@@ -116,26 +144,79 @@ public class PacStudentController : MonoBehaviour
             if (IsWalkable(targetGrid))
             {
                 currentInput = lastInput;
+                ResetWallCollisionTracking();
                 StartTweenMovement(targetGrid);
                 UpdateAnimationDirection(GetWorldDirection(currentInput));
                 return;
             }
+            else
+            {
+                // Check for wall collision when movement is blocked (only once)
+                CheckWallCollisionAtPosition(targetGrid, lastInput);
+            }
         }
 
         // If lastInput direction is blocked, try currentInput direction
-        if (currentInput != Vector2Int.zero)
+        if (currentInput != Vector2Int.zero && currentInput != lastInput)
         {
             Vector2Int targetGrid = currentGridPosition + currentInput;
 
             if (IsWalkable(targetGrid))
             {
+                // Reset wall collision tracking when movement succeeds
+                ResetWallCollisionTracking();
                 StartTweenMovement(targetGrid);
                 UpdateAnimationDirection(GetWorldDirection(currentInput));
                 return;
             }
+            else
+            {
+                CheckWallCollisionAtPosition(targetGrid, currentInput);
+            }
         }
 
         // No valid moves - PacStudent stops
+    }
+
+    private void ResetWallCollisionTracking()
+    {
+        hasTriggeredWallCollision = false;
+        lastWallCollisionPosition = new Vector2Int(int.MinValue, int.MinValue);
+    }
+
+    private void CheckWallCollisionAtPosition(Vector2Int gridPos, Vector2Int direction)
+    {
+        if (hasTriggeredWallCollision && lastWallCollisionPosition == gridPos)
+        {
+            return; // Don't trigger again
+        }
+
+        // Check if the blocked position is actually a wall
+        if (levelMap != null &&
+            gridPos.y >= 0 && gridPos.y < levelMap.GetLength(0) &&
+            gridPos.x >= 0 && gridPos.x < levelMap.GetLength(1))
+        {
+            int tileValue = levelMap[gridPos.y, gridPos.x];
+
+            // If it's a wall tile, trigger wall collision
+            if (IsWall(tileValue))
+            {
+                // Mark as handled
+                hasTriggeredWallCollision = true;
+                lastWallCollisionPosition = gridPos;
+
+                Vector3 wallWorldPos = GridToWorld(gridPos);
+                OnWallCollision(wallWorldPos);
+
+                Debug.Log($"Wall collision triggered at {gridPos} in direction {direction}");
+            }
+        }
+    }
+
+    private bool IsWall(int tileValue)
+    {
+        return tileValue == 1 || tileValue == 2 || tileValue == 3 ||
+               tileValue == 4 || tileValue == 7 || tileValue == 8;
     }
 
     private Vector2Int GetWorldDirection(Vector2Int gridDirection)
@@ -168,20 +249,20 @@ public class PacStudentController : MonoBehaviour
     {
         if (animator != null)
         {
-            // Only animate when lerping (moving)
-            animator.speed = isLerping ? 1f : 0f;
+            if (isPlayingDeathAnimation)
+            {
+                animator.speed = 1f;
+                return;
+            }
+
+            // Only animate when lerping (moving) and movement is enabled
+            animator.speed = (isLerping && movementEnabled) ? 1f : 0f;
         }
 
         // Handle particle effects
-        if (!isLerping && dustParticles != null && dustParticles.isPlaying)
+        if ((!isLerping || !movementEnabled || isPlayingDeathAnimation) && dustParticles != null && dustParticles.isPlaying)
         {
             dustParticles.Stop();
-        }
-
-        // Handle audio
-        if (!isLerping && audioSource != null && audioSource.isPlaying)
-        {
-            audioSource.Stop();
         }
     }
 
@@ -193,12 +274,25 @@ public class PacStudentController : MonoBehaviour
             return;
         }
 
+        if (isLerping)
+        {
+            Debug.LogWarning("Already lerping, ignoring new movement request");
+            return;
+        }
+
         isLerping = true;
         Vector3 targetPos = GridToWorld(targetGrid);
         float duration = 1f / moveSpeed;
 
-        // Use the Tweener class to handle movement
-        tweener.AddTween(transform, transform.position, targetPos, duration);
+        bool tweenAdded = tweener.AddTween(transform, transform.position, targetPos, duration);
+
+        if (!tweenAdded)
+        {
+            Debug.LogError("Failed to add tween!");
+            isLerping = false;
+            return;
+        }
+
         currentGridPosition = targetGrid;
 
         // Start particle effect
@@ -207,19 +301,102 @@ public class PacStudentController : MonoBehaviour
             dustParticles.Play();
         }
 
-        // Play appropriate audio
         PlayMovementAudio(targetGrid);
 
-        // Start coroutine to handle tween completion
+        CheckForPelletAtPosition(targetGrid);
+
         StartCoroutine(WaitForTweenCompletion(duration));
+    }
+
+    private void PlayMovementAudio(Vector2Int targetGrid)
+    {
+        if (audioSource == null) return;
+
+        // Check if there's a pellet at target position
+        bool hasPellet = false;
+        if (levelMap != null &&
+            targetGrid.y >= 0 && targetGrid.y < levelMap.GetLength(0) &&
+            targetGrid.x >= 0 && targetGrid.x < levelMap.GetLength(1))
+        {
+            int tileValue = levelMap[targetGrid.y, targetGrid.x];
+            hasPellet = (tileValue == 5 || tileValue == 6) && !collectedPellets.Contains(targetGrid);
+        }
+
+        if (hasPellet && pelletEatingSound != null)
+        {
+            audioSource.PlayOneShot(pelletEatingSound);
+        }
+        else if (movementSound != null)
+        {
+            audioSource.PlayOneShot(movementSound);
+        }
     }
 
     private IEnumerator WaitForTweenCompletion(float duration)
     {
         yield return new WaitForSeconds(duration);
-
         isLerping = false;
-        CheckForPellet();
+    }
+
+    private void CheckForPelletAtPosition(Vector2Int gridPos)
+    {
+        if (collectedPellets.Contains(gridPos)) return;
+
+        if (levelMap != null &&
+            gridPos.y >= 0 && gridPos.y < levelMap.GetLength(0) &&
+            gridPos.x >= 0 && gridPos.x < levelMap.GetLength(1))
+        {
+            int tileValue = levelMap[gridPos.y, gridPos.x];
+
+            if (tileValue == 5 || tileValue == 6)
+            {
+                // Mark as collected
+                collectedPellets.Add(gridPos);
+                levelMap[gridPos.y, gridPos.x] = 0;
+
+                // Add score based on pellet type
+                if (ScoreManager.Instance != null)
+                {
+                    if (tileValue == 6) // Power pellet
+                    {
+                        ScoreManager.Instance.AddPowerPelletScore();
+
+                        // Activate power pellet effect
+                        if (PowerPelletManager.Instance != null)
+                        {
+                            PowerPelletManager.Instance.ActivatePowerPellet();
+                        }
+
+                        Debug.Log("Power pellet collected - 50 points added and power activated");
+                    }
+                    else // Normal pellet
+                    {
+                        ScoreManager.Instance.AddPelletScore();
+                        Debug.Log("Normal pellet collected - 10 points added");
+                    }
+                }
+
+                // Find and destroy the pellet GameObject
+                DestroyPelletAtPosition(gridPos);
+
+                Debug.Log($"{(tileValue == 6 ? "Power " : "")}Pellet collected at {gridPos}");
+            }
+        }
+    }
+
+    private void DestroyPelletAtPosition(Vector2Int gridPos)
+    {
+        Vector3 worldPos = GridToWorld(gridPos);
+        Collider2D[] colliders = Physics2D.OverlapCircleAll(worldPos, 0.3f);
+
+        foreach (Collider2D col in colliders)
+        {
+            if (col.CompareTag("Pellet") || col.CompareTag("PowerPellet"))
+            {
+                Destroy(col.gameObject);
+                break;
+            }
+        }
     }
 
     private bool IsWalkable(Vector2Int gridPos)
@@ -240,86 +417,252 @@ public class PacStudentController : MonoBehaviour
             return false;
         }
 
-        // Check if it's walkable
+        // Check if it's walkable (including pellets)
         return tileValue == 0 || tileValue == 5 || tileValue == 6;
     }
 
-    private void PlayMovementAudio(Vector2Int targetGrid)
+    // Called by CollisionHandler
+    public void OnWallCollision(Vector3 wallPosition)
     {
-        if (audioSource == null) return;
+        Debug.Log($"Wall collision handled by PacStudent at position: {wallPosition}");
 
-        // Check if there's a pellet
-        bool hasPellet = false;
-        if (levelMap != null &&
-            targetGrid.y >= 0 && targetGrid.y < levelMap.GetLength(0) &&
-            targetGrid.x >= 0 && targetGrid.x < levelMap.GetLength(1))
+        // Play wall collision sound
+        if (wallCollisionSound != null && audioSource != null)
         {
-            int tileValue = levelMap[targetGrid.y, targetGrid.x];
-            hasPellet = (tileValue == 5 || tileValue == 6);
+            audioSource.PlayOneShot(wallCollisionSound);
+            Debug.Log("Playing wall collision sound");
+        }
+        else
+        {
+            Debug.LogWarning("Wall collision sound or audio source is null");
         }
 
-        // Play audio clip
-        if (hasPellet && pelletEatingSound != null)
-        {
-            audioSource.clip = pelletEatingSound;
-            audioSource.Play();
-        }
-        else if (movementSound != null)
-        {
-            audioSource.clip = movementSound;
-            audioSource.Play();
-        }
+        // Create particle effect at collision point
+        CreateWallCollisionEffect(wallPosition);
     }
 
-    private void CheckForPellet()
+    public void OnPelletCollision(GameObject pellet, bool isPowerPellet)
     {
-        // Check if current position has a pellet
-        if (levelMap != null &&
-            currentGridPosition.y >= 0 && currentGridPosition.y < levelMap.GetLength(0) &&
-            currentGridPosition.x >= 0 && currentGridPosition.x < levelMap.GetLength(1))
+        // Check if pellet still exists
+        if (pellet == null)
         {
-            int tileValue = levelMap[currentGridPosition.y, currentGridPosition.x];
+            Debug.Log("Pellet is null, already destroyed");
+            return;
+        }
 
-            if (tileValue == 5 || tileValue == 6)
+        // Get pellet position and check if already collected
+        Vector2Int pelletGridPos = WorldToGrid(pellet.transform.position);
+
+        if (collectedPellets.Contains(pelletGridPos))
+        {
+            Debug.Log("Pellet already collected, destroying GameObject");
+            Destroy(pellet);
+            return;
+        }
+
+        Debug.Log($"Pellet collision handled: {(isPowerPellet ? "Power Pellet" : "Normal Pellet")}");
+
+        // Mark as collected
+        collectedPellets.Add(pelletGridPos);
+
+        // Update level map
+        if (levelMap != null &&
+            pelletGridPos.y >= 0 && pelletGridPos.y < levelMap.GetLength(0) &&
+            pelletGridPos.x >= 0 && pelletGridPos.x < levelMap.GetLength(1))
+        {
+            levelMap[pelletGridPos.y, pelletGridPos.x] = 0;
+        }
+
+        // Add score through ScoreManager then destroy
+        if (ScoreManager.Instance != null)
+        {
+            if (isPowerPellet)
             {
-                // Collect pellet
-                CollectPellet(currentGridPosition, tileValue == 6);
-
-                // Update level map to mark pellet as collected
-                levelMap[currentGridPosition.y, currentGridPosition.x] = 0;
+                ScoreManager.Instance.AddPowerPelletScore();
+                Debug.Log("Power pellet collision - 50 points added");
+            }
+            else
+            {
+                ScoreManager.Instance.AddPelletScore();
+                Debug.Log("Normal pellet collision - 10 points added");
             }
         }
+
+        Destroy(pellet);
     }
 
-    private void CollectPellet(Vector2Int position, bool isPowerPellet)
+    public void OnGhostCollision(GameObject ghost, PowerPelletManager.GhostState ghostState)
     {
-        // Find and destroy the pellet GameObject at this position
-        Vector3 worldPos = GridToWorld(position);
-        Collider2D[] colliders = Physics2D.OverlapCircleAll(worldPos, 0.1f);
+        Debug.Log($"Ghost collision handled - Ghost state: {ghostState}");
 
-        foreach (Collider2D col in colliders)
+        switch (ghostState)
         {
-            if (col.CompareTag("Pellet") || col.CompareTag("PowerPellet"))
-            {
-                Destroy(col.gameObject);
-
-                // Add score, trigger events, etc.
-                if (isPowerPellet)
+            case PowerPelletManager.GhostState.Normal:
+                // Player dies
+                if (LifeManager.Instance != null)
                 {
-                    // Handle power pellet collection
-                    Debug.Log("Power Pellet collected!");
-                }
-                else
-                {
-                    // Handle normal pellet collection
-                    Debug.Log("Pellet collected!");
+                    LifeManager.Instance.LoseLife();
                 }
                 break;
-            }
+
+            case PowerPelletManager.GhostState.Scared:
+            case PowerPelletManager.GhostState.Recovering:
+                // PacStudent eats the ghost
+                GhostController ghostController = ghost.GetComponent<GhostController>();
+                if (ghostController != null)
+                {
+                    // Kill the ghost through PowerPelletManager
+                    if (PowerPelletManager.Instance != null)
+                    {
+                        PowerPelletManager.Instance.OnGhostKilled(ghostController);
+                    }
+
+                    // Add score
+                    if (ScoreManager.Instance != null)
+                    {
+                        ScoreManager.Instance.AddGhostScore();
+                    }
+
+                    Debug.Log($"Ghost {ghost.name} eaten by PacStudent!");
+                }
+                break;
+
+            case PowerPelletManager.GhostState.Dead:
+                // No effect - dead ghosts don't affect player
+                Debug.Log("Collision with dead ghost - no effect");
+                break;
         }
     }
 
-    
+    public void ResetToStartPosition()
+    {
+
+        isPlayingDeathAnimation = false;
+
+        // Reset to top-left corner (starting position)
+        Vector2Int startGridPos = new Vector2Int(1, 1);
+        currentGridPosition = startGridPos;
+        transform.position = GridToWorld(startGridPos);
+
+        // Reset movement state
+        currentInput = Vector2Int.zero;
+        lastInput = Vector2Int.zero;
+        hasReceivedFirstInput = false;
+        isLerping = false;
+
+        // Reset collision tracking
+        ResetWallCollisionTracking();
+
+        // Reset animation to face right and ensure animator is ready
+        if (animator != null)
+        {
+            animator.speed = 1f;
+            UpdateAnimationDirection(Vector2Int.right);
+
+            // Reset any death animation state
+            animator.ResetTrigger("Death");
+
+            animator.Play("MoveRight", 0, 0f);
+        }
+
+        Debug.Log("PacStudent reset to start position");
+    }
+
+    public void PlayDeathAnimation()
+    {
+        if (animator != null)
+        {
+            isPlayingDeathAnimation = true;
+
+            // Stop particle effects
+            if (dustParticles != null && dustParticles.isPlaying)
+            {
+                dustParticles.Stop();
+            }
+
+            // Stop any current movement animations
+            animator.speed = 1f;
+
+            // Trigger death animation
+            animator.SetTrigger("Death");
+
+            Debug.Log("Death animation triggered");
+        }
+    }
+
+    public void WaitForPlayerInput()
+    {
+        hasReceivedFirstInput = false;
+        currentInput = Vector2Int.zero;
+        lastInput = Vector2Int.zero;
+
+        // Set facing direction but don't move
+        UpdateAnimationDirection(Vector2Int.right);
+        UpdateAnimationState();
+
+        Debug.Log("Waiting for player input...");
+    }
+
+    public void OnTeleporterCollision(GameObject teleporter)
+    {
+        Debug.Log("Teleporter collision detected");
+    }
+
+    public void TeleportTo(Vector2Int newGridPosition, Vector3 newWorldPosition)
+    {
+        // Stop current movement
+        if (tweener != null)
+        {
+            tweener.RemoveAllTweens();
+        }
+
+        isLerping = false;
+
+        // Update position
+        currentGridPosition = newGridPosition;
+        transform.position = newWorldPosition;
+
+        Debug.Log($"Teleported to grid position: {newGridPosition}, world position: {newWorldPosition}");
+    }
+
+    public void OnCherryCollision(GameObject cherry)
+    {
+        Debug.Log("Cherry collision handled");
+
+        CherryController cherryController = FindFirstObjectByType<CherryController>();
+        if (cherryController != null)
+        {
+            cherryController.OnCherryCollected();
+        }
+    }
+
+    private void CreateWallCollisionEffect(Vector3 collisionPoint)
+    {
+        GameObject effectObj = new GameObject("WallCollisionEffect");
+        effectObj.transform.position = collisionPoint;
+
+        ParticleSystem effect = effectObj.AddComponent<ParticleSystem>();
+        var main = effect.main;
+        main.startLifetime = 0.3f;
+        main.startSpeed = 3f;
+        main.startSize = 0.1f;
+        main.startColor = Color.yellow;
+        main.maxParticles = 10;
+        main.simulationSpace = ParticleSystemSimulationSpace.World;
+
+        var emission = effect.emission;
+        emission.SetBursts(new ParticleSystem.Burst[]
+        {
+            new ParticleSystem.Burst(0.0f, 10)
+        });
+        emission.rateOverTime = 0;
+
+        var shape = effect.shape;
+        shape.shapeType = ParticleSystemShapeType.Circle;
+        shape.radius = 0.1f;
+
+        Destroy(effectObj, 1f);
+    }
 
     private Vector2Int WorldToGrid(Vector3 worldPos)
     {
@@ -413,7 +756,7 @@ public class PacStudentController : MonoBehaviour
 
         // Material
         Material dustMaterial = new Material(Shader.Find("Sprites/Default"));
-        dustMaterial.color = new Color(0f, 1f, 1f,1f);
+        dustMaterial.color = new Color(0f, 1f, 1f, 1f);
         renderer.material = dustMaterial;
 
 

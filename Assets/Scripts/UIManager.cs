@@ -62,7 +62,7 @@ public class UIManager : MonoBehaviour
     {
         ShowLoadingScreen();
 
-        yield return new WaitForSeconds(1.0f);
+        yield return new WaitForSeconds(0.5f);
 
         AsyncOperation asyncLoad = SceneManager.LoadSceneAsync(0);
 

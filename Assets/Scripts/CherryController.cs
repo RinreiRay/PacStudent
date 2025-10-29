@@ -208,6 +208,15 @@ public class CherryController : MonoBehaviour
             collider.isTrigger = true;
             collider.radius = 0.3f;
         }
+
+        // Cherry Collision
+        Rigidbody2D rb = cherry.GetComponent<Rigidbody2D>();
+        if (rb == null)
+        {
+            rb = cherry.AddComponent<Rigidbody2D>();
+        }
+        rb.bodyType = RigidbodyType2D.Kinematic;
+        rb.gravityScale = 0f;
     }
 
     private IEnumerator MoveCherry(GameObject cherry, Vector3 startPos, Vector3 endPos)
