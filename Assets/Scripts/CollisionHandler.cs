@@ -97,10 +97,22 @@ public class CollisionHandler : MonoBehaviour
 
     private void HandleGhostCollision(Collider2D ghost)
     {
-        if (pacStudent != null)
+        if (pacStudent == null) return;
+
+        GhostController ghostController = ghost.GetComponent<GhostController>();
+        PowerPelletManager.GhostState ghostState = PowerPelletManager.GhostState.Normal;
+
+        if (ghostController != null)
         {
-            pacStudent.OnGhostCollision(ghost.gameObject);
+            ghostState = ghostController.GetCurrentState();
+            Debug.Log($"Ghost collision - Ghost: {ghost.name}, State: {ghostState}");
         }
+        else
+        {
+            Debug.LogWarning($"Ghost {ghost.name} has no GhostController component!");
+        }
+
+        pacStudent.OnGhostCollision(ghost.gameObject, ghostState);
     }
 
     private void HandleTeleporterCollision(Collider2D teleporter)

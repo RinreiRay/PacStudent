@@ -338,6 +338,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   audio1: {fileID: 197504368}
   audio2: {fileID: 766232873}
+  normalMusic: {fileID: 8300000, guid: 5e5750fab79004ac695fb78baa103b0a, type: 3}
+  scaredMusic: {fileID: 8300000, guid: 705bc4d5c60a44112973aa97b210d8f7, type: 3}
+  deadGhostMusic: {fileID: 8300000, guid: a3f803b7391c84c508e377098e0e4ffc, type: 3}
   delayAudio: 3
 --- !u!224 &244919332 stripped
 RectTransform:
@@ -1280,6 +1283,7 @@ Transform:
   - {fileID: 1650945323}
   - {fileID: 1973143971}
   - {fileID: 1909454368}
+  - {fileID: 1086508016}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &865420011
@@ -1429,6 +1433,7 @@ GameObject:
   - component: {fileID: 882631870}
   - component: {fileID: 882631871}
   - component: {fileID: 882631872}
+  - component: {fileID: 882631873}
   m_Layer: 0
   m_Name: Ghost2
   m_TagString: Untagged
@@ -1516,7 +1521,7 @@ Animator:
   m_GameObject: {fileID: 882631869}
   m_Enabled: 1
   m_Avatar: {fileID: 0}
-  m_Controller: {fileID: 9100000, guid: 73ef9fa4cbfa34b12b1eef0333d2dad4, type: 2}
+  m_Controller: {fileID: 9100000, guid: d93d1c32ae601466fabfc2b57985afef, type: 2}
   m_CullingMode: 0
   m_UpdateMode: 0
   m_ApplyRootMotion: 0
@@ -1528,6 +1533,20 @@ Animator:
   m_AllowConstantClipSamplingOptimization: 1
   m_KeepAnimatorStateOnDisable: 0
   m_WriteDefaultValuesOnDisable: 0
+--- !u!114 &882631873
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 882631869}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bdcc1c03c7e534ad2a6fa8b13bb97d9d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  initialPosition: {x: 12, y: -13.5, z: 0}
+  ghostType: 1
 --- !u!1 &935946237
 GameObject:
   m_ObjectHideFlags: 0
@@ -1537,6 +1556,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 935946238}
+  - component: {fileID: 935946239}
   m_Layer: 0
   m_Name: PowerPellets
   m_TagString: Untagged
@@ -1563,6 +1583,22 @@ Transform:
   - {fileID: 1037947355}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &935946239
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 935946237}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6bdb28df45bb64c0cb227383e1a1b5c5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  powerPelletDuration: 10
+  recoveringTime: 3
+  scaredMusic: {fileID: 8300000, guid: 705bc4d5c60a44112973aa97b210d8f7, type: 3}
+  deadGhostMusic: {fileID: 8300000, guid: a3f803b7391c84c508e377098e0e4ffc, type: 3}
 --- !u!1 &948778791
 GameObject:
   m_ObjectHideFlags: 0
@@ -2212,6 +2248,60 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 002c044ad3e0f40338e0d9a91369ba8d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!1 &1086508015
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1086508016}
+  - component: {fileID: 1086508017}
+  m_Layer: 0
+  m_Name: LifeManager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1086508016
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1086508015}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 804628846}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1086508017
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1086508015}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 73afdae34dacc4a7da4a01fd38e58bf4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  maxLives: 3
+  currentLives: 3
+  livesPanel: {fileID: 587753194}
+  heartSprites:
+  - {fileID: 1722222728}
+  - {fileID: 754218830}
+  - {fileID: 1022737687}
+  deathParticlesPrefab: {fileID: 0}
+  deathSound: {fileID: 8300000, guid: 8748b21fe6f77431eb5c75d3f0f4c1e1, type: 3}
+  deathAnimationBuffer: 0.5
 --- !u!1 &1190084023
 GameObject:
   m_ObjectHideFlags: 0
@@ -2359,6 +2449,7 @@ GameObject:
   - component: {fileID: 1235017769}
   - component: {fileID: 1235017770}
   - component: {fileID: 1235017771}
+  - component: {fileID: 1235017772}
   m_Layer: 0
   m_Name: Ghost4
   m_TagString: Untagged
@@ -2446,7 +2537,7 @@ Animator:
   m_GameObject: {fileID: 1235017768}
   m_Enabled: 1
   m_Avatar: {fileID: 0}
-  m_Controller: {fileID: 9100000, guid: ab5dab22f91704b86a60f2c249fb83e6, type: 2}
+  m_Controller: {fileID: 9100000, guid: 9df0f00f71d314c2e8675c46b2d23128, type: 2}
   m_CullingMode: 0
   m_UpdateMode: 0
   m_ApplyRootMotion: 0
@@ -2458,6 +2549,20 @@ Animator:
   m_AllowConstantClipSamplingOptimization: 1
   m_KeepAnimatorStateOnDisable: 0
   m_WriteDefaultValuesOnDisable: 0
+--- !u!114 &1235017772
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1235017768}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bdcc1c03c7e534ad2a6fa8b13bb97d9d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  initialPosition: {x: 14, y: -13.5, z: 0}
+  ghostType: 3
 --- !u!1001 &1235645717
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -2583,6 +2688,7 @@ GameObject:
   - component: {fileID: 1343482256}
   - component: {fileID: 1343482257}
   - component: {fileID: 1343482258}
+  - component: {fileID: 1343482259}
   m_Layer: 0
   m_Name: Ghost3
   m_TagString: Untagged
@@ -2670,7 +2776,7 @@ Animator:
   m_GameObject: {fileID: 1343482255}
   m_Enabled: 1
   m_Avatar: {fileID: 0}
-  m_Controller: {fileID: 9100000, guid: e038b48176b454d3995d76a1cbaf51f6, type: 2}
+  m_Controller: {fileID: 9100000, guid: 03ac107fc2d694230be2ed874b9d3516, type: 2}
   m_CullingMode: 0
   m_UpdateMode: 0
   m_ApplyRootMotion: 0
@@ -2682,6 +2788,20 @@ Animator:
   m_AllowConstantClipSamplingOptimization: 1
   m_KeepAnimatorStateOnDisable: 0
   m_WriteDefaultValuesOnDisable: 0
+--- !u!114 &1343482259
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1343482255}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bdcc1c03c7e534ad2a6fa8b13bb97d9d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  initialPosition: {x: 13, y: -13.5, z: 0}
+  ghostType: 2
 --- !u!1 &1421394102
 GameObject:
   m_ObjectHideFlags: 0
@@ -3030,6 +3150,7 @@ GameObject:
   - component: {fileID: 1602280826}
   - component: {fileID: 1602280827}
   - component: {fileID: 1602280828}
+  - component: {fileID: 1602280829}
   m_Layer: 0
   m_Name: Ghost1
   m_TagString: Untagged
@@ -3129,6 +3250,20 @@ Animator:
   m_AllowConstantClipSamplingOptimization: 1
   m_KeepAnimatorStateOnDisable: 0
   m_WriteDefaultValuesOnDisable: 0
+--- !u!114 &1602280829
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1602280825}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bdcc1c03c7e534ad2a6fa8b13bb97d9d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  initialPosition: {x: 13, y: -10.5, z: 0}
+  ghostType: 0
 --- !u!1 &1649645653
 GameObject:
   m_ObjectHideFlags: 0

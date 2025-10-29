@@ -12,6 +12,7 @@ public class PacStudentController : MonoBehaviour
     private bool hasReceivedFirstInput = false;
     private bool isLerping = false;
     private bool movementEnabled = false;
+    private bool isPlayingDeathAnimation = false;
     private Vector2Int currentGridPosition;
 
     private Animator animator;
@@ -68,6 +69,12 @@ public class PacStudentController : MonoBehaviour
 
     void Update()
     {
+        if (isPlayingDeathAnimation)
+        {
+            UpdateAnimationState();
+            return;
+        }
+
         GatherInput();
 
         // Allow movement after first input
@@ -242,12 +249,18 @@ public class PacStudentController : MonoBehaviour
     {
         if (animator != null)
         {
+            if (isPlayingDeathAnimation)
+            {
+                animator.speed = 1f;
+                return;
+            }
+
             // Only animate when lerping (moving) and movement is enabled
             animator.speed = (isLerping && movementEnabled) ? 1f : 0f;
         }
 
         // Handle particle effects
-        if ((!isLerping || !movementEnabled) && dustParticles != null && dustParticles.isPlaying)
+        if ((!isLerping || !movementEnabled || isPlayingDeathAnimation) && dustParticles != null && dustParticles.isPlaying)
         {
             dustParticles.Stop();
         }
@@ -347,17 +360,20 @@ public class PacStudentController : MonoBehaviour
                     if (tileValue == 6) // Power pellet
                     {
                         ScoreManager.Instance.AddPowerPelletScore();
-                        Debug.Log("Power pellet collected - 50 points added");
+
+                        // Activate power pellet effect
+                        if (PowerPelletManager.Instance != null)
+                        {
+                            PowerPelletManager.Instance.ActivatePowerPellet();
+                        }
+
+                        Debug.Log("Power pellet collected - 50 points added and power activated");
                     }
                     else // Normal pellet
                     {
                         ScoreManager.Instance.AddPelletScore();
                         Debug.Log("Normal pellet collected - 10 points added");
                     }
-                }
-                else
-                {
-                    Debug.LogError("ScoreManager.Instance is null!");
                 }
 
                 // Find and destroy the pellet GameObject
@@ -475,9 +491,116 @@ public class PacStudentController : MonoBehaviour
         Destroy(pellet);
     }
 
-    public void OnGhostCollision(GameObject ghost)
+    public void OnGhostCollision(GameObject ghost, PowerPelletManager.GhostState ghostState)
     {
-        Debug.Log("Ghost collision handled");
+        Debug.Log($"Ghost collision handled - Ghost state: {ghostState}");
+
+        switch (ghostState)
+        {
+            case PowerPelletManager.GhostState.Normal:
+                // Player dies
+                if (LifeManager.Instance != null)
+                {
+                    LifeManager.Instance.LoseLife();
+                }
+                break;
+
+            case PowerPelletManager.GhostState.Scared:
+            case PowerPelletManager.GhostState.Recovering:
+                // PacStudent eats the ghost
+                GhostController ghostController = ghost.GetComponent<GhostController>();
+                if (ghostController != null)
+                {
+                    // Kill the ghost through PowerPelletManager
+                    if (PowerPelletManager.Instance != null)
+                    {
+                        PowerPelletManager.Instance.OnGhostKilled(ghostController);
+                    }
+
+                    // Add score
+                    if (ScoreManager.Instance != null)
+                    {
+                        ScoreManager.Instance.AddGhostScore();
+                    }
+
+                    Debug.Log($"Ghost {ghost.name} eaten by PacStudent!");
+                }
+                break;
+
+            case PowerPelletManager.GhostState.Dead:
+                // No effect - dead ghosts don't affect player
+                Debug.Log("Collision with dead ghost - no effect");
+                break;
+        }
+    }
+
+    public void ResetToStartPosition()
+    {
+
+        isPlayingDeathAnimation = false;
+
+        // Reset to top-left corner (starting position)
+        Vector2Int startGridPos = new Vector2Int(1, 1);
+        currentGridPosition = startGridPos;
+        transform.position = GridToWorld(startGridPos);
+
+        // Reset movement state
+        currentInput = Vector2Int.zero;
+        lastInput = Vector2Int.zero;
+        hasReceivedFirstInput = false;
+        isLerping = false;
+
+        // Reset collision tracking
+        ResetWallCollisionTracking();
+
+        // Reset animation to face right and ensure animator is ready
+        if (animator != null)
+        {
+            animator.speed = 1f;
+            UpdateAnimationDirection(Vector2Int.right);
+
+            // Reset any death animation state
+            animator.ResetTrigger("Death");
+
+            animator.Play("MoveRight", 0, 0f);
+        }
+
+        Debug.Log("PacStudent reset to start position");
+    }
+
+    public void PlayDeathAnimation()
+    {
+        if (animator != null)
+        {
+            isPlayingDeathAnimation = true;
+
+            // Stop particle effects
+            if (dustParticles != null && dustParticles.isPlaying)
+            {
+                dustParticles.Stop();
+            }
+
+            // Stop any current movement animations
+            animator.speed = 1f;
+
+            // Trigger death animation
+            animator.SetTrigger("Death");
+
+            Debug.Log("Death animation triggered");
+        }
+    }
+
+    public void WaitForPlayerInput()
+    {
+        hasReceivedFirstInput = false;
+        currentInput = Vector2Int.zero;
+        lastInput = Vector2Int.zero;
+
+        // Set facing direction but don't move
+        UpdateAnimationDirection(Vector2Int.right);
+        UpdateAnimationState();
+
+        Debug.Log("Waiting for player input...");
     }
 
     public void OnTeleporterCollision(GameObject teleporter)

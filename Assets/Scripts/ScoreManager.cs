@@ -35,9 +35,8 @@ public class ScoreManager : MonoBehaviour
 
     void Start()
     {
-        // Initialize score display
         UpdateScoreUI();
-        UpdateScaredUI();
+        UpdateGhostTimerUI();
     }
 
     public void InitializePelletCount(int total)
@@ -54,7 +53,6 @@ public class ScoreManager : MonoBehaviour
             remainingPellets--;
             Debug.Log($"Pellets remaining: {remainingPellets}");
 
-            // Check for game over condition
             if (remainingPellets <= 0)
             {
                 Debug.Log("All pellets collected! Triggering game over...");
@@ -69,13 +67,19 @@ public class ScoreManager : MonoBehaviour
     public void AddPelletScore()
     {
         AddScore(pelletScore);
-        CollectPellet(); // Track pellet collection
+        CollectPellet();
     }
 
     public void AddPowerPelletScore()
     {
         AddScore(powerPelletScore);
-        CollectPellet(); // Track pellet collection
+        CollectPellet();
+
+        // Trigger power pellet effects
+        if (PowerPelletManager.Instance != null)
+        {
+            PowerPelletManager.Instance.ActivatePowerPellet();
+        }
     }
 
     public void AddScore(int points)
@@ -99,16 +103,41 @@ public class ScoreManager : MonoBehaviour
     {
         if (scoreText != null)
         {
-            scoreText.text = currentScore.ToString("D6"); // 6-digit format with leading zeros
+            scoreText.text = currentScore.ToString("D6");
         }
     }
 
-    private void UpdateScaredUI()
+    // Updated method to hide scared text when not in hunt mode
+    public void UpdateGhostTimerUI()
     {
         if (scaredText != null)
         {
-            scaredText.text = "0";
+            if (PowerPelletManager.Instance != null && PowerPelletManager.Instance.IsPowerPelletActive())
+            {
+                // Show the scared text with remaining time countdown
+                scaredText.gameObject.SetActive(true);
+                int remainingSeconds = Mathf.CeilToInt(PowerPelletManager.Instance.GetRemainingTime());
+                scaredText.text = remainingSeconds.ToString();
+
+                Debug.Log($"Ghost timer UI updated: {remainingSeconds} seconds remaining");
+            }
+            {
+                // Hide the scared text completely when power pellet is not active
+                scaredText.gameObject.SetActive(false);
+
+                Debug.Log("Ghost timer UI hidden - power pellet not active");
+            }
         }
+        else
+        {
+            Debug.LogWarning("Scared text UI element is not assigned!");
+        }
+    }
+
+    // Keep the old method name for backward compatibility, but redirect to the correct method
+    public void UpdateScaredUI()
+    {
+        UpdateGhostTimerUI();
     }
 
     public void SaveHighScore(float gameTime)
@@ -118,13 +147,11 @@ public class ScoreManager : MonoBehaviour
 
         bool shouldSave = false;
 
-        // Save if current score is higher
         if (currentScore > savedHighScore)
         {
             shouldSave = true;
             Debug.Log($"New high score! {currentScore} > {savedHighScore}");
         }
-        // Save if score is same but time is better (lower)
         else if (currentScore == savedHighScore && gameTime < savedHighScoreTime)
         {
             shouldSave = true;
